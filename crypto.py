@@ -21,15 +21,24 @@ download_data('ltcusdt_orderbook')
 download_data('ltcbtc_orderbook')
 'done'
 # %% load csv files
-btc = pd.read_csv('data/btcusdt_trade.csv', index_col=0, parse_dates=True)
-btc.dtypes
-# btc['price'].hist(bins=20, figsize=(10, 10))
-btc['quantity'].plot(figsize=(7, 7))
-plt.show()
-btc['price'].plot(figsize=(7, 7))
-plt.show()
+btc = pd.read_csv('data/btcusdt_trade.csv')
+'done'
 
 # %%
-times = pd.DatetimeIndex(btc.time)
-grouped = btc.groupby([times.hour, times.minute])
-grouped.agg(lambda x: x['price'] * x['quantity'])
+
+
+def prepare(df):
+    diff = df['price'] - df['price'].shift(periods=1)
+    result = pd.DataFrame(df['time'])
+    volume = diff * df['quantity']
+
+    times = pd.DatetimeIndex(df['time']).round('10S')
+    result['volume'] = volume.groupby([times]).sum()
+    price = df['price'].groupby([times]).first()
+    return result
+
+
+prepare(btc)
+
+
+# %%
